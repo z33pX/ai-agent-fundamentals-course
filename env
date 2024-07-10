@@ -1,0 +1,66 @@
+# !Rename this file to .env!
+
+# OpenAI
+OPENAI_API_KEY = 
+
+# Pinecone
+PINECONE_API_KEY = 
+PINECONE_ENVIRONMENT = 
+
+# Eezo
+EEZO_API_KEY = 
+# For sending direct messages
+EEZO_EEZO_ID = 
+THREAD_ID = 
+
+# Agent
+AGENT_RESEARCH = 
+
+# Tools
+TOOL_SUMMARIZE_LAST_X_EMAILS = 
+TOOL_SEARCH_VECTOR_DB = 
+TOOL_SIMILAR_WEB_SEARCH = 
+TOOL_EXA_COMPANY_SEARCH = 
+TOOL_YOU_COM_SEARCH = 
+TOOL_DRAFT_EMAIL = 
+TOOL_GENERATE_UI = 
+TOOL_ASSISTENT = 
+TOOL_NEWS_SEARCH = 
+
+# Exa
+EXA_API_KEY = 
+
+# Zyte
+ZYTE_API_KEY = 
+
+# Groq
+GROQ_API_KEY = 
+
+# ScraperAPI
+SCRAPERAPI_API_KEY = 
+
+# Nylas API 3
+NYLAS_GRANT = 
+NYLAS_API_KEY = 
+NYLAS_API_URL = https://api.eu.nylas.com  # Or https://api.us.nylas.com
+
+# You.com
+YOUCOM_API_KEY = 
+YOUCOM_RAG_API_KEY = 
+
+# Brave Search
+BRAVE_SEARCH_API_KEY = 
+
+# SerperApi
+SERPER_API_KEY = 
+
+# Antropic
+ANTHROPIC_API_KEY = 
+
+# Langfuse
+LANGFUSE_SECRET_KEY = 
+LANGFUSE_PUBLIC_KEY = 
+LANGFUSE_HOST = https://cloud.langfuse.com
+
+# E2B
+E2B_API_KEY =

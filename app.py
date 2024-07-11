@@ -130,20 +130,6 @@ def company_search(context, **kwargs):
 
 
 # Works
-@e.on(os.environ["TOOL_DRAFT_EMAIL"])
-def draft_email(context, **kwargs):
-    m = context.new_message()
-    c = m.add("text", text="Drafting email...")
-    m.notify()
-
-    result = DraftEmail(context).invoke(kwargs)
-
-    m.replace(c.id, "text", text=result)
-    m.notify()
-    return result
-
-
-# Works
 @e.on(os.environ["TOOL_SUMMARIZE_LAST_X_EMAILS"])
 def summarize_emails(context, **kwargs):
     if context:

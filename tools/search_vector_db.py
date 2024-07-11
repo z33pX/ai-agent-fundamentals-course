@@ -1,7 +1,6 @@
 from utils.langfuse_model_wrapper import langfuse_model_wrapper
 from langchain.pydantic_v1 import BaseModel
 from langchain.tools import BaseTool
-from eezo.interface import Interface
 from langfuse import Langfuse
 from pinecone import Pinecone
 from typing import Type
@@ -15,7 +14,6 @@ l = Langfuse()
 e = Eezo()
 
 agent = e.get_agent(os.environ["TOOL_SEARCH_VECTOR_DB"])
-
 summarize_search_results = l.get_prompt("summarize-search-results")
 
 

@@ -15,7 +15,6 @@ l = Langfuse()
 e = Eezo()
 
 agent = e.get_agent(os.environ["TOOL_SUMMARIZE_LAST_X_EMAILS"])
-
 summarize_emails = l.get_prompt("summarize-emails")
 
 
@@ -36,7 +35,6 @@ class SummarizeLastXEmails(BaseTool):
             self.state = state
 
     def _run(self, **kwargs) -> str | None:
-
         nr_of_emails = kwargs.get("nr_of_emails", 3)
         if "processed_emails" not in self.state:
             self.state["processed_emails"] = []
@@ -66,7 +64,7 @@ class SummarizeLastXEmails(BaseTool):
                 self.state["processed_emails"].append(message.id)
 
         if not emails:
-            return None
+            return "No emails to summarize."
 
         system_prompt = summarize_emails.compile(
             emails="\n\n".join(emails), user_prompt=kwargs.get("query", "")
@@ -81,8 +79,5 @@ class SummarizeLastXEmails(BaseTool):
             host="groq",
             temperature=0.7,
         )
-
-        if email_summary is None:
-            return "No new emails to summarize."
 
         return email_summary

@@ -82,7 +82,11 @@ class GenerateUI(BaseTool):
                 f"\n{'='*50}\n> Running following AI-generated code:\n{code_str}\n{'='*50}"
             )
 
-            # TODO: Problem: the message object is not available on the server side.
+            # TODO: Refactor:
+            # 1. Create a new UI Component API prompt that explains the
+            # json reqired to be generated.
+            # 2. Iterate the returned array of dicts that represent one UI
+            # component and create a UI object with self.message.add(obj["type"], **obj)
 
             with CodeInterpreter() as code_interpreter:
                 # Execute the code

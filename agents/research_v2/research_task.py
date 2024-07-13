@@ -4,6 +4,7 @@ from .db import ContentDB
 
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_core.messages import HumanMessage
+from eezo.interface.message import Message
 from langfuse.client import StatefulTraceClient
 from langchain_openai import ChatOpenAI
 from langchain.tools import BaseTool
@@ -59,17 +60,18 @@ class ResearchTask:
         research_topic: str,
         dependencies: List[str],
         trace: StatefulTraceClient,
-        eezo_interface: Interface,
+        eezo_context: Interface,
     ):
         self.id = id
         self.research_topic = research_topic
         self.dependencies = dependencies
         self.trace = trace
-        self.eezo_interface = eezo_interface
+        self.eezo_context = eezo_context
 
     def decide_what_to_use(
         self,
         db: ContentDB,
+        m: Message,
         content_ids: List[str],
         research_topic: str,
     ) -> List[str]:
@@ -112,11 +114,15 @@ class ResearchTask:
         choosen_ids = [i for i in response.snippet_indeces if i < len(content_ids)]
 
         logging.info("------" * 10)
-        logging.info(f"Chosen snippet for question '{research_topic}'")
+        logging.info(f"Chosen snippets for question '{research_topic}'")
         results = []
+        m.add("text", text="**Decided to use:**\n\n")
         for idx in choosen_ids:
             snippet = content_objs[idx].snippet[:150]
             logging.info(f"- {snippet} ...")
+            m.add(
+                "text", text=f"- [{content_objs[idx].title}]({content_objs[idx].url})"
+            )
             results.append({"content_id": content_ids[idx], "snippet": snippet})
         logging.info("------" * 10)
 
@@ -127,6 +133,7 @@ class ResearchTask:
     def check_if_more_info_needed(
         self,
         db: ContentDB,
+        m: Message,
         research_topic: str,
         content_ids: List[str],
     ):
@@ -135,6 +142,9 @@ class ResearchTask:
         generate the summary for the research_topic. If not, it will return new
         topics for which more information is needed.
         """
+        m.add("text", text="Checking if more information is needed...\n\n")
+        m.notify()
+
         span = l.span(
             trace_id=self.trace.id,
             name="check_if_more_info_needed",
@@ -170,8 +180,7 @@ class ResearchTask:
             logging.info("------" * 10)
             logging.info(f"Additional questions next to '{research_topic}':")
             span = l.span(trace_id=self.trace.id, name="EezoMessage")
-            m = self.eezo_interface.new_message()
-            m.add("text", text=f"Expanding on question **{research_topic}**\n\n")
+            m.add("text", text=f"**Expanding on question** {research_topic}\n\n")
             results = []
             for question in response.research_topics:
                 logging.info(f" - {question[:150]} ...")
@@ -187,11 +196,25 @@ class ResearchTask:
         except Exception as error:
             logging.error(f"Error in check_if_more_info_needed: {error}")
 
+        if len(response.research_topics) == 0:
+            logging.info(
+                f"{self.id} - Content is sufficient for '{self.research_topic}'"
+            )
+            m.add("text", text="This content is sufficient for the summary:\n\n")
+            for content_id in content_ids:
+                content = db.get_doc_by_id(content_id)
+                if content:
+                    m.add("text", text=f"- [{content.title}]({content.url})")
+                else:
+                    logging.error(f"{self.id} - Content not found for id {content_id}")
+            m.notify()
+
         return response.research_topics
 
     def collect_content(
         self,
         db: ContentDB,
+        m: Message,
         tools: List[BaseTool],
         research_topic: str,
     ) -> List[Dict[str, Any]]:
@@ -204,7 +227,7 @@ class ResearchTask:
             input={"research_topic": research_topic},
         )
 
-        new_ids = []
+        existing_content = []
         results = []
 
         # 1. Execute a tool agent to select tools to execute that can help in collecting content.
@@ -230,7 +253,7 @@ class ResearchTask:
             logging.info(f"No tools to execute. Attempt {attempt} failed.")
         else:
             logging.error("Failed to execute tools after 3 attempts. Exiting.")
-            return new_ids
+            return existing_content
         tool_span.end(
             output={"tool_calls": openai_result.additional_kwargs["tool_calls"]}
         )
@@ -268,7 +291,7 @@ class ResearchTask:
                 logging.info(
                     f"Content already exists for {content.url} and is > 500 characters."
                 )
-                new_ids.append(content_obj.id)
+                existing_content.append(content_obj)
             else:
                 content_result.append(content)
         results = content_result
@@ -318,7 +341,25 @@ class ResearchTask:
         for content in results:
             content.id = str(uuid.uuid4())
 
+        # Add existing_content to results
+        results.extend(existing_content)
+
         span.end(output={"results": [content.dict() for content in results]})
+
+        if len(results) > 0:
+            m.add("text", text=f"**Found new content** for {self.research_topic}:\n\n")
+            for content in results:
+                db.upsert_doc(content)
+                # logging.info(f"{self.id} - - {content.snippet}")
+                m.add("text", text=f"- [{content.title}]({content.url})")
+            m.notify()
+        else:
+            logging.error(f"{self.id} - No content found for '{self.research_topic}'")
+            m.add(
+                "text",
+                text=f"No content found for this research topic {self.research_topic}",
+            )
+            m.notify()
 
         return results
 
@@ -328,51 +369,38 @@ class ResearchTask:
         state: Dict[str, TaskResult],
         tools: List[BaseTool],
     ) -> TaskResult:
+        logging.info(f"Executing task {self.id}:")
         relevant_state = {dep: state[dep] for dep in self.dependencies}
-        logging.info(f"Executing task {self.id}")
 
         # Get the content used by previous tasks.
         # length of content_ids will be zero if this is a root task.
         content_ids = [item.content_used for item in relevant_state.values()]
         content_ids = [item for sublist in content_ids for item in sublist]
 
-        m = self.eezo_interface.new_message()
+        m = self.eezo_context.new_message()
+        m.add("text", text=f"**Researching {self.id}** - {self.research_topic}\n\n")
+        m.notify()
+
         if content_ids:
             # Do we need more information besides the given content?
             research_topics = self.check_if_more_info_needed(
-                db, self.research_topic, content_ids
+                db, m, self.research_topic, content_ids
             )
             if len(research_topics) > 0:
                 # Yes, we need more information.
-                results = self.collect_content(db, tools, research_topics[0])
-
-                m.add(
-                    "text", text=f"Found new content for **{research_topics[0]}**\n\n"
-                )
-                for content in results:
-                    db.upsert_doc(content)
-                    logging.info(f"- {content.snippet}")
-                    m.add("text", text=f"- [{content.title}]({content.url})")
-
-                content_ids.extend([content.id for content in results])
+                for research_topic in research_topics:
+                    results = self.collect_content(db, m, tools, research_topic)
+                    content_ids.extend([content.id for content in results])
         else:
             # We definitely need more information.
-            results = self.collect_content(db, tools, self.research_topic)
-
-            m.add("text", text=f"Found new content for **{self.research_topic}**\n\n")
-            for content in results:
-                db.upsert_doc(content)
-                logging.info(f"- {content.snippet}")
-                m.add("text", text=f"- [{content.title}]({content.url})")
-
+            results = self.collect_content(db, m, tools, self.research_topic)
             content_ids.extend([content.id for content in results])
 
         span = l.span(trace_id=self.trace.id, name="EezoMessage")
-        m.notify()
         span.end()
 
         # Select what information to use for the summary.
-        content_ids = self.decide_what_to_use(db, content_ids, self.research_topic)
+        content_ids = self.decide_what_to_use(db, m, content_ids, self.research_topic)
 
         # Process the content to generate the summary.
         content_docs = [db.get_doc_by_id(content_id) for content_id in content_ids]
@@ -381,11 +409,12 @@ class ResearchTask:
             if content:
                 formatted_webpages += f"Webpage {i + 1}:\nTitle: {content.title}\nUrl: {content.url}\nContent: {content.content}\n\n"
 
+        logging.info(
+            f"{self.id} - Generating notes for topic '{self.research_topic}'..."
+        )
         system_prompt = extract_notes.compile(
             research_topic=self.research_topic, formatted_webpages=formatted_webpages
         )
-
-        logging.info(f"Generating notes for topic '{self.research_topic}'...")
         notes = langfuse_model_wrapper(
             trace=self.trace,
             name="ConvertWebpagesToNotes",

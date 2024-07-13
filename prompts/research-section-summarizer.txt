@@ -7,7 +7,7 @@ Instructions:
 - Only consider the most important cliff notes in the summary.
 - Be concise and quote as much numbers and facts as possible. 
 - Don't just copy the cliff notes. Answer the research question.
-- It is important to include sources and references after each sentence or paragraph using Markup, like [1](https://www.example.com) in the text and in the list at the end of the summary with: **1:** [link name](https://www.example.com).
+- It is important to include sources and references after each sentence or paragraph using Markup, like [[1](https://www.example.com)] in the text and in the list at the end of the summary with: 1: [link name](https://www.example.com). Don't forget to provide the url!
 - Keep it short and to the point, below 300 words.
 - Answer the given question
 

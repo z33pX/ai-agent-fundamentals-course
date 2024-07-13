@@ -24,6 +24,7 @@ def langfuse_model_wrapper(
     observation_id=None,
 ):
     logging.info(f"Start inference '{name}' - model {model}, host {host}")
+
     if trace is None:
         trace = l.trace(name=name)
     if observation_id is None:

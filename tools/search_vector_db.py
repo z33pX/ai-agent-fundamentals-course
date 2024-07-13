@@ -44,7 +44,7 @@ class SearchVectorDB(BaseTool):
         )
 
         return langfuse_model_wrapper(
-            name="DraftEmail",
+            name="SearchVectorDB",
             system_prompt=system_prompt,
             prompt=summarize_search_results,
             user_prompt=kwargs["query"],

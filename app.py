@@ -199,9 +199,7 @@ def web_search(context, **kwargs):
         )
 
     # include_summary not necessary. Only burnes additional tokens
-    result = SimilarWebSearch(
-        user_prompt=kwargs["query"], include_summary=False
-    ).invoke(**kwargs)
+    result = SimilarWebSearch(include_summary=False).invoke(**kwargs)
 
     formatted_content = "\n".join(
         [

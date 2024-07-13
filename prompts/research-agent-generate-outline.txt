@@ -5,7 +5,7 @@ User research goal
 
 - Identify the Core Topics: Create a set of hierarchical questions, starting with a broad primary question followed by detailed sub-questions to explore nuanced aspects of the topic, similar to the numbered format we discuss in the response template.
 - Each of the two root question should ask for a specific entity, like a company, a person, an article about a specific topic, or a comparison between two entities, companies, etc.
-- Each subquestion should be focused on a specific aspect of the root question. Max three subquestions are allowed.
+- Each subquestion should be focused on a specific aspect of the root question. Max two subquestions are allowed.
 - Ensure that your questions are open-ended where appropriate, to allow for detailed responses, and closed-ended where specific data is required.
 - The research should not include any generic industry overviews of the research topics, only the specific insights necessary to answer the question.
 - Think from first principles.

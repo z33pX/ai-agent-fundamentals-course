@@ -24,20 +24,17 @@ class SimilarWebSearch(BaseTool):
     name: str = agent.name
     description: str = agent.description
     args_schema: Type[BaseModel] = agent.input_model
-    user_prompt: str | None = None
     chat_message: Message | None
     include_summary: bool = False
 
     def __init__(
         self,
         include_summary: bool = False,
-        user_prompt: str = "",
         chat_message: Message | None = None,
     ):
         super().__init__()
         self.include_summary = include_summary
         self.chat_message = chat_message
-        self.user_prompt = user_prompt
 
     def brave_search(self, query, count):
         """
@@ -75,8 +72,9 @@ class SimilarWebSearch(BaseTool):
             }
 
     def _run(self, **kwargs) -> ResearchToolOutput:
-        entity_name = kwargs.get("entity_name")
-        instructions = kwargs.get("instructions")
+        entity_name = kwargs.get("entity_name", "No entity name provided")
+        instructions = kwargs.get("instructions", "")
+        user_prompt = kwargs.get("query", "")
 
         search_results = self.brave_search(entity_name + " website", count=1)
         result = search_results["web"]["results"][0]
@@ -128,7 +126,7 @@ class SimilarWebSearch(BaseTool):
         summary = ""
         if self.include_summary and len(content) > 0:
             system_prompt = summarize_similarweb.compile(
-                text=text, instructions=instructions, user_prompt=self.user_prompt
+                text=text, instructions=instructions, user_prompt=user_prompt
             )
             summary = langfuse_model_wrapper(
                 name="SimilarWebSearchSummary",

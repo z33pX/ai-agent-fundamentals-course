@@ -2,6 +2,7 @@ from utils.langfuse_json_model_wrapper import langfuse_json_model_wrapper
 from utils.langfuse_model_wrapper import langfuse_model_wrapper
 from .db import ContentDB
 
+from tools.research.common.model_schemas import ContentItem
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_core.messages import HumanMessage
 from eezo.interface.message import Message
@@ -42,7 +43,7 @@ class TaskResult(BaseModel):
     id: str
     error: str
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         return {
             "result": self.result,
             "content_used": self.content_used,
@@ -76,7 +77,16 @@ class ResearchTask:
         research_topic: str,
     ) -> List[str]:
         """
-        This function will ask the LLM to select the content that seems most relevant
+        This function will decide what content to use for generating the summary.
+
+        Args:
+            db (ContentDB): The database object to interact with the content database.
+            m (Message): The message object to send notifications.
+            content_ids (List[str]): The content ids to decide what to use.
+            research_topic (str): The research topic for which to decide what to use.
+
+        Returns:
+            List[str]: The content ids to use for generating the summary.
         """
         span = l.span(
             trace_id=self.trace.id,
@@ -84,8 +94,12 @@ class ResearchTask:
             input={"content_ids": content_ids, "research_topic": research_topic},
         )
         # 1. Get all snippets for each content_id.
-        content_objs = [db.get_doc_by_id(content_id) for content_id in content_ids]
-        content_objs = [content for content in content_objs if content]
+        content_objs: List[ContentItem | None] = [
+            db.get_doc_by_id(content_id) for content_id in content_ids
+        ]
+        content_objs: List[ContentItem] = [
+            content for content in content_objs if content
+        ]
 
         # Prepare the prompt.
         formatted_snippets = ""
@@ -136,11 +150,18 @@ class ResearchTask:
         m: Message,
         research_topic: str,
         content_ids: List[str],
-    ):
+    ) -> List[str]:
         """
-        This function will check if the given content_ids are enough to
-        generate the summary for the research_topic. If not, it will return new
-        topics for which more information is needed.
+        This function will check if more information is needed to generate the summary.
+
+        Args:
+            db (ContentDB): The database object to interact with the content database.
+            m (Message): The message object to send notifications.
+            research_topic (str): The research topic for which to check if more information is needed.
+            content_ids (List[str]): The content ids to check if more information is needed.
+
+        Returns:
+            List[str]: The additional questions that need to be answered.
         """
         m.add("text", text="Checking if more information is needed...\n\n")
         m.notify()
@@ -151,7 +172,9 @@ class ResearchTask:
             input={"research_topic": research_topic, "content_ids": content_ids},
         )
         # 1. Get the content snippets for the given content_ids.
-        content_objs = [db.get_doc_by_id(content_id) for content_id in content_ids]
+        content_objs: List[ContentItem] = [
+            db.get_doc_by_id(content_id) for content_id in content_ids
+        ]
         content_snippets = [content.snippet for content in content_objs if content]
 
         # 2. Prepare the prompt.
@@ -202,7 +225,7 @@ class ResearchTask:
             )
             m.add("text", text="This content is sufficient for the summary:\n\n")
             for content_id in content_ids:
-                content = db.get_doc_by_id(content_id)
+                content: ContentItem = db.get_doc_by_id(content_id)
                 if content:
                     m.add("text", text=f"- [{content.title}]({content.url})")
                 else:
@@ -217,9 +240,18 @@ class ResearchTask:
         m: Message,
         tools: List[BaseTool],
         research_topic: str,
-    ) -> List[Dict[str, Any]]:
+    ) -> List[ContentItem]:
         """
-        Collects new information based on the research topics, adds it to the content, and returns the indices of the new content .
+        This function will collect content for the given research_topic using the provided tools.
+
+        Args:
+            db (ContentDB): The database object to interact with the content database.
+            m (Message): The message object to send notifications.
+            tools (List[BaseTool]): The tools to use for collecting content.
+            research_topic (str): The research topic for which to collect content.
+
+        Returns:
+            List[ContentItem]: The content items collected for the research topic.
         """
         span = l.span(
             trace_id=self.trace.id,
@@ -227,8 +259,8 @@ class ResearchTask:
             input={"research_topic": research_topic},
         )
 
-        existing_content = []
-        results = []
+        existing_content: List[ContentItem] = []
+        results: List[ContentItem] = []
 
         # 1. Execute a tool agent to select tools to execute that can help in collecting content.
         tool_span = l.span(
@@ -286,7 +318,7 @@ class ResearchTask:
         # except if the content is less than 500 characters. If so, we scrape the content.
         content_result = []
         for content in results:
-            content_obj = db.get_doc_by_url(content.url)
+            content_obj: ContentItem = db.get_doc_by_url(content.url)
             if content_obj and len(content_obj.content) >= 500:
                 logging.info(
                     f"Content already exists for {content.url} and is > 500 characters."
@@ -403,7 +435,9 @@ class ResearchTask:
         content_ids = self.decide_what_to_use(db, m, content_ids, self.research_topic)
 
         # Process the content to generate the summary.
-        content_docs = [db.get_doc_by_id(content_id) for content_id in content_ids]
+        content_docs: List[ContentItem] = [
+            db.get_doc_by_id(content_id) for content_id in content_ids
+        ]
         formatted_webpages = ""
         for i, content in enumerate(content_docs):
             if content:
@@ -426,7 +460,7 @@ class ResearchTask:
 
         content_urls = []
         for content_id in content_ids:
-            content = db.get_doc_by_id(content_id)
+            content: ContentItem = db.get_doc_by_id(content_id)
             if content:
                 content_urls.append(content.url)
 

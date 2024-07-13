@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 from langchain.tools import BaseTool
 from langfuse import Langfuse
 from datetime import datetime
-from typing import List
+from typing import List, Dict, Any
 from eezo import Eezo
 
 import json
@@ -43,7 +43,7 @@ class Question(BaseModel):
         description="A list of IDs that this question depends on. An empty array indicates no dependencies.",
     )
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         """
         Converts the Question to a dictionary.
 
@@ -71,7 +71,7 @@ class ResearchOutline(BaseModel):
         min_items=1,
     )
 
-    def to_dict(self):
+    def to_dict(self) -> Dict["str", Any]:
         """
         Converts the ResearchOutline to a dictionary.
 
@@ -99,7 +99,7 @@ class ResearchAgent:
         self.tools = tools
         self.langfuse = Langfuse()
 
-    def invoke(self, eezo_context: Interface, **kwargs):
+    def invoke(self, eezo_context: Interface, **kwargs) -> None:
         """
         Executes the research process.
 
@@ -164,7 +164,7 @@ class ResearchAgent:
             user_prompt=query,
         )
 
-    def _convert_outline_to_dag(self, trace, outline: str):
+    def _convert_outline_to_dag(self, trace, outline: str) -> ResearchOutline:
         """
         Converts the research outline into a directed acyclic graph (DAG).
 
@@ -197,7 +197,7 @@ class ResearchAgent:
             eezo_context (Interface): The eezo_context to communicate with.
 
         Returns:
-            dict: The results of the research tasks.
+            List[TaskResult]: The results of the research tasks.
         """
         task_list = []
         for question in research_outline.questions:
@@ -215,7 +215,7 @@ class ResearchAgent:
         scheduler.execute()
         return scheduler.get_results()
 
-    def _generate_final_report(self, results: List[TaskResult], trace):
+    def _generate_final_report(self, results: List[TaskResult], trace) -> str:
         """
         Generates the final report from the research results.
 
@@ -256,7 +256,7 @@ class ResearchAgent:
         research_outline: ResearchOutline,
         results: List[TaskResult],
         final_report: str,
-    ):
+    ) -> None:
         """
         Saves the final research report to a JSON file.
 
@@ -283,7 +283,7 @@ class ResearchAgent:
 
     def _send_message(
         self, eezo_context: Interface, trace, text: str, content: str = ""
-    ):
+    ) -> None:
         """
         Sends a message to the Eezo eezo_context, optionally including additional content.
 

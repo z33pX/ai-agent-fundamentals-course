@@ -1,13 +1,15 @@
 from utils.langfuse_model_wrapper import langfuse_model_wrapper
-from e2b_code_interpreter import CodeInterpreter
+from e2b_code_interpreter import CodeInterpreter, Result
 from langchain.pydantic_v1 import BaseModel
 from langchain.tools import BaseTool
 from guardrails.hub import ValidPython
 from guardrails import Guard
 from langfuse import Langfuse
-from typing import Type
+from typing import Type, Tuple
 from eezo.interface.message import Message
 from eezo import Eezo
+
+import json
 
 l = Langfuse()
 e = Eezo()
@@ -35,7 +37,9 @@ class GenerateUI(BaseTool):
         self.message = message
         self.input_str = input_str
 
-    def _code_interpret(code_interpreter: CodeInterpreter, code: str):
+    def _code_interpret(
+        self, code_interpreter: CodeInterpreter, code: str
+    ) -> Tuple[Result, str]:
         print(f"\n{'='*50}\n> Running following AI-generated code:\n{code}\n{'='*50}")
         exec = code_interpreter.notebook.exec_cell(
             code,
@@ -50,7 +54,7 @@ class GenerateUI(BaseTool):
         if exec.error:
             print("[Code Interpreter error]", exec.error)  # Runtime error
         else:
-            return exec.results, exec.logs
+            return exec.results[0], exec.logs
 
     def _run(self, **kwargs):
         system_prompt = generate_ui.compile(
@@ -82,20 +86,16 @@ class GenerateUI(BaseTool):
                 f"\n{'='*50}\n> Running following AI-generated code:\n{code_str}\n{'='*50}"
             )
 
-            # TODO: Refactor:
-            # 1. Create a new UI Component API prompt that explains the
-            # json reqired to be generated.
-            # 2. Iterate the returned array of dicts that represent one UI
-            # component and create a UI object with self.message.add(obj["type"], **obj)
-
+            ui_components = []
             with CodeInterpreter() as code_interpreter:
-                # Execute the code
-                result, _ = self._code_interpret(code_interpreter, code_str)
-                print(f"\n{'='*50}\n> Result of the code:\n{result}\n{'='*50}")
-                # It will return a dictionary.
-                self.message.id = result["id"]
-                self.message.interface = result["interface"]
-                self.message.notify()
+                code_result, _ = self._code_interpret(code_interpreter, code_str)
+                json_str = code_result.raw["text/plain"]
+                cleaned_json_str = json_str.strip("'").replace("\\\\", "\\")
+                ui_components = json.loads(cleaned_json_str)
+
+            for component in ui_components:
+                self.message.add(component["type"], **component["props"])
+            self.message.notify()
         except Exception as e:
             self.message.add("text", text="An error occurred while executing the code:")
             code_str = f"Error: {e}"

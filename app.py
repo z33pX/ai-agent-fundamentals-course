@@ -13,26 +13,26 @@ import os
 e = Eezo()
 
 # Research Agent V1 ==============================================
-# from agents.research_v1 import research_agent
+from agents.research_v1 import research_agent
 
 
-# @e.on(os.environ["AGENT_RESEARCH"])
-# def research_agent_v1(context, **kwargs):
-#     m = context.new_message()
-#     c = m.add("text", text="Researching...")
-#     m.notify()
+@e.on(os.environ["AGENT_RESEARCH"])
+def research_agent_v1(context, **kwargs):
+    m = context.new_message()
+    c = m.add("text", text="Researching...")
+    m.notify()
 
-#     final_state = research_agent.invoke(
-#         {"messages": [HumanMessage(content=kwargs["query"])]},
-#         config={"configurable": {"thread_id": 42}},
-#     )
-#     result = final_state["messages"][-1].content
+    final_state = research_agent.invoke(
+        {"messages": [HumanMessage(content=kwargs["query"])]},
+        config={"configurable": {"thread_id": 42}},
+    )
+    result = final_state["messages"][-1].content
 
-#     m.replace(c.id, "text", text=result)
-#     m.notify()
+    m.replace(c.id, "text", text=result)
+    m.notify()
 
 
-# e.connect()
+e.connect()
 
 
 # Research Agent V2 ==============================================
@@ -51,9 +51,9 @@ def research_agent_handler(context, **kwargs):
 
 e.connect()
 
-exit()
 
 # Tools ==========================================================
+from tools import *
 
 
 @e.on(os.environ["TOOL_GENERATE_UI"])
@@ -62,7 +62,6 @@ def text_to_chart(context, **kwargs):
     m.add("text", text="Generate chart...")
     m.notify()
 
-    # TODO: Problem is that the code in the sandbox doesn't have access to the self.message object
     thread = context.get_thread(to_string=True)
 
     gen_ui = GenerateUI(m, thread)

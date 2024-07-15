@@ -21,6 +21,23 @@ def langfuse_json_model_wrapper(
     trace=None,
     observation_id=None,
 ) -> BaseModel:
+    """
+    Wrapper for the langfuse model inference.
+
+    Args:
+        name (str): The name of the inference.
+        system_prompt (str): The system prompt.
+        user_prompt (str): The user prompt.
+        prompt (TextPromptClient): The prompt.
+        base_model (BaseModel): The base model.
+        model (str): The model to use.
+        temperature (int): The temperature.
+        trace (Trace): The trace.
+        observation_id (str): The observation id.
+
+    Returns:
+        BaseModel: The result in form of a Pydantic model.
+    """
     logging.info(f"Start json inference '{name}' - model {model}")
     if trace is None:
         trace = l.trace(name=name)

@@ -22,7 +22,24 @@ def langfuse_model_wrapper(
     host="openai",
     trace=None,
     observation_id=None,
-):
+) -> str:
+    """
+    Wrapper for the langfuse model inference.
+
+    Args:
+        name (str): The name of the inference.
+        system_prompt (str): The system prompt.
+        user_prompt (str): The user prompt.
+        prompt (TextPromptClient): The prompt.
+        model (str): The model to use.
+        temperature (int): The temperature.
+        host (str): The host to use.
+        trace (Trace): The trace.
+        observation_id (str): The observation id.
+
+    Returns:
+        str: The result.
+    """
     logging.info(f"Start inference '{name}' - model {model}, host {host}")
 
     if trace is None:

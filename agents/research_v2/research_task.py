@@ -5,17 +5,16 @@ from .db import ContentDB
 from tools.research.common.model_schemas import ContentItem
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_core.messages import HumanMessage
-from eezo.interface.message import Message
 from langfuse.client import StatefulTraceClient
+from typing import List, Dict, Any, Optional
+from eezo.interface.message import Message
 from langchain_openai import ChatOpenAI
 from langchain.tools import BaseTool
-from typing import List, Dict, Any, Optional
+from pydantic import BaseModel
 from pinecone import Pinecone
 from langfuse import Langfuse
-from pydantic import BaseModel
 
 from eezo.interface import Interface
-from eezo import Eezo
 
 import logging
 import openai

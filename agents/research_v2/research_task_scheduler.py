@@ -4,11 +4,11 @@ from .db import ContentDB
 
 from langchain.tools import BaseTool
 from collections import defaultdict
-from typing import List, Dict, Any
+from typing import List, Dict
 import concurrent.futures
+import threading
 import logging
 import os
-import threading
 
 
 class TaskScheduler:
@@ -51,7 +51,7 @@ class TaskScheduler:
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=4)
         self.lock = threading.Lock()
 
-    def setup_dependencies(self):
+    def setup_dependencies(self) -> None:
         """
         Sets up the task dependencies by populating the in_degree and dependents attributes.
         """
@@ -70,14 +70,14 @@ class TaskScheduler:
         Returns:
             TaskResult: The result of the executed task.
         """
-        # try:
-        result: TaskResult = task.execute(self.db, self.state, self.tools)
-        return result
-        # except Exception as e:
-        #     logging.error(f"Error executing task {task.id}: {str(e)}")
-        #     return TaskResult(id=task.id, error=str(e))
+        try:
+            result: TaskResult = task.execute(self.db, self.state, self.tools)
+            return result
+        except Exception as e:
+            logging.error(f"Error executing task {task.id}: {str(e)}")
+            return TaskResult(id=task.id, error=str(e))
 
-    def execute(self):
+    def execute(self) -> None:
         """
         Executes all tasks in the scheduler, respecting their dependencies.
         """

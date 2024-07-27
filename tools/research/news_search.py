@@ -66,7 +66,7 @@ class NewsSearch(BaseTool):
         )
 
         class ModelResponse(BaseModel):
-            snippet_indeces: List[int]
+            snippet_indexes: List[int]
 
         response: ModelResponse = langfuse_json_model_wrapper(
             name="SelectContent",
@@ -76,7 +76,7 @@ class NewsSearch(BaseTool):
             base_model=ModelResponse,
         )
 
-        indices = [i for i in response.snippet_indeces if i < len(content)]
+        indices = [i for i in response.snippet_indexes if i < len(content)]
         return [content[i] for i in indices]
 
     def _run(self, **kwargs) -> ResearchToolOutput:

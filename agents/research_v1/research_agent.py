@@ -26,17 +26,6 @@ tool_node = ToolNode(tools)
 model = llm.bind_tools(tools)
 
 
-# Define the function that determines whether to continue or not
-def should_continue(state: MessagesState):
-    messages = state["messages"]
-    last_message = messages[-1]
-    # If the LLM makes a tool call, then we route to the "tools" node
-    if last_message.tool_calls:
-        return "tools"
-    # Otherwise, we stop (reply to the user)
-    return END
-
-
 # Define the function that calls the model
 def call_model(state: MessagesState):
     messages = state["messages"]
@@ -55,6 +44,18 @@ workflow.add_node("tools", tool_node)
 # Set the entrypoint as `agent`
 # This means that this node is the first one called
 workflow.set_entry_point("agent")
+
+
+# Define the function that determines whether to continue or not
+def should_continue(state: MessagesState):
+    messages = state["messages"]
+    last_message = messages[-1]
+    # If the LLM makes a tool call, then we route to the "tools" node
+    if last_message.tool_calls:
+        return "tools"
+    # Otherwise, we stop (reply to the user)
+    return END
+
 
 # We now add a conditional edge
 workflow.add_conditional_edges(

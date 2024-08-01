@@ -1,7 +1,7 @@
 from utils.langfuse_model_wrapper import langfuse_model_wrapper
 from langchain.pydantic_v1 import BaseModel
 from langchain.tools import BaseTool
-from eezo.interface import Interface
+from eezo.interface import Context
 from langfuse import Langfuse
 from typing import Type
 from eezo import Eezo
@@ -16,12 +16,12 @@ assistent = l.get_prompt("assistent")
 
 
 class Assistent(BaseTool):
-    name = agent.name
+    name = agent.agent_id
     description = agent.description
     args_schema: Type[BaseModel] = agent.input_model
-    eezo_interface: Interface | None
+    eezo_interface: Context | None
 
-    def __init__(self, eezo_interface: Interface | None = None):
+    def __init__(self, eezo_interface: Context | None = None):
         super().__init__()
         self.eezo_interface = eezo_interface
 

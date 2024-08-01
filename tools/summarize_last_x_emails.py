@@ -1,7 +1,7 @@
 from utils.langfuse_model_wrapper import langfuse_model_wrapper
 from langchain.pydantic_v1 import BaseModel
 from langchain.tools import BaseTool
-from eezo.interface import Interface
+from eezo.interface import Context
 from nylas import Client as Nylas
 from typing import Type, Dict, Any
 from langfuse import Langfuse
@@ -19,7 +19,7 @@ summarize_emails = l.get_prompt("summarize-emails")
 
 
 class SummarizeLastXEmails(BaseTool):
-    name = agent.name
+    name = agent.agent_id
     description = agent.description
     args_schema: Type[BaseModel] = agent.input_model
     state: Dict[str, Any] | None

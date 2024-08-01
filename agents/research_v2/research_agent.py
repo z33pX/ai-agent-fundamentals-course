@@ -4,7 +4,7 @@ from .research_task_scheduler import TaskScheduler
 from .research_task import ResearchTask, TaskResult
 from langfuse.client import StatefulTraceClient
 
-from eezo.interface import Interface
+from eezo.interface import Context
 from pydantic import BaseModel, Field
 from langchain.tools import BaseTool
 from langfuse import Langfuse
@@ -99,12 +99,12 @@ class ResearchAgent:
         self.tools = tools
         self.langfuse = Langfuse()
 
-    def invoke(self, eezo_context: Interface, **kwargs) -> None:
+    def invoke(self, eezo_context: Context, **kwargs) -> None:
         """
         Executes the research process.
 
         Args:
-            eezo_context (Interface): The eezo_context to communicate with.
+            eezo_context (Context): The eezo_context to communicate with.
             **kwargs: Additional keyword arguments, including the user's query.
         """
 
@@ -186,7 +186,7 @@ class ResearchAgent:
         )
 
     def _plan_and_execute(
-        self, research_outline: ResearchOutline, trace, eezo_context: Interface
+        self, research_outline: ResearchOutline, trace, eezo_context: Context
     ) -> List[TaskResult]:
         """
         Executes the research tasks based on the DAG.
@@ -194,7 +194,7 @@ class ResearchAgent:
         Args:
             research_outline (ResearchOutline): The research outline as a DAG.
             trace (StatefulTraceClient): The trace client instance.
-            eezo_context (Interface): The eezo_context to communicate with.
+            eezo_context (Context): The eezo_context to communicate with.
 
         Returns:
             List[TaskResult]: The results of the research tasks.
@@ -282,13 +282,13 @@ class ResearchAgent:
             )
 
     def _send_message(
-        self, eezo_context: Interface, trace, text: str, content: str = ""
+        self, eezo_context: Context, trace, text: str, content: str = ""
     ) -> None:
         """
         Sends a message to the Eezo eezo_context, optionally including additional content.
 
         Args:
-            eezo_context (Interface): The eezo_context to communicate with.
+            eezo_context (Context): The eezo_context to communicate with.
             trace (StatefulTraceClient): The trace client instance.
             text (str): The text message to send.
             content (str): Additional content to include in the message.

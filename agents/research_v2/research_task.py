@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from pinecone import Pinecone
 from langfuse import Langfuse
 
-from eezo.interface import Interface
+from eezo.interface import Context
 
 import logging
 import openai
@@ -60,7 +60,7 @@ class ResearchTask:
         research_topic: str,
         dependencies: List[str],
         trace: StatefulTraceClient,
-        eezo_context: Interface,
+        eezo_context: Context,
     ):
         self.id = id
         self.research_topic = research_topic

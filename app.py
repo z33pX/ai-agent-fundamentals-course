@@ -28,11 +28,15 @@ def research_agent_v1(context, **kwargs):
     )
     result = final_state["messages"][-1].content
 
-    m.replace(c.id, "text", text=result)
+    mermaid_graph = research_agent.get_graph().draw_mermaid()
+    m.replace(c.id, "text", text=f"```{mermaid_graph}```")
+    m.add("text", text=result)
     m.notify()
 
 
 e.connect()
+
+exit()
 
 
 # Research Agent V2 ==============================================
@@ -70,16 +74,16 @@ def text_to_chart(context, **kwargs):
 
 
 # Works
-@e.on(os.environ["TOOL_SEARCH_VECTOR_DB"])
-def research_result_search(context, **kwargs):
-    m = context.new_message()
-    c = m.add("text", text="Searching past results...")
-    m.notify()
+# @e.on(os.environ["PINECONE_API_KEY"])
+# def research_result_search(context, **kwargs):
+#     m = context.new_message()
+#     c = m.add("text", text="Searching past results...")
+#     m.notify()
 
-    summary = SearchVectorDB().invoke(kwargs)
+#     summary = SearchVectorDB().invoke(kwargs)
 
-    m.replace(c.id, "text", text=summary)
-    m.notify()
+#     m.replace(c.id, "text", text=summary)
+#     m.notify()
 
 
 # Works

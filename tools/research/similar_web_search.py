@@ -21,20 +21,17 @@ summarize_similarweb = l.get_prompt("summarize-similarweb-search-result")
 
 
 class SimilarWebSearch(BaseTool):
-    name: str = agent.name
+    name: str = agent.agent_id
     description: str = agent.description
     args_schema: Type[BaseModel] = agent.input_model
-    chat_message: Message | None
     include_summary: bool = False
 
     def __init__(
         self,
         include_summary: bool = False,
-        chat_message: Message | None = None,
     ):
         super().__init__()
         self.include_summary = include_summary
-        self.chat_message = chat_message
 
     def brave_search(self, query, count):
         """
@@ -80,22 +77,12 @@ class SimilarWebSearch(BaseTool):
         result = search_results["web"]["results"][0]
         domain = result["url"].split("/")[2]
 
-        if self.chat_message:
-            self.chat_message.add(
-                "text", text=f"Searching on SimilarWeb for [{entity_name}]({domain})..."
-            )
-            self.chat_message.notify()
-
         url = f"https://www.similarweb.com/website/{domain}/#overview"
         response = requests.post(
             "https://api.zyte.com/v1/extract",
             auth=(os.getenv("ZYTE_API_KEY"), ""),
             json={"url": url, "browserHtml": True},
         )
-
-        if self.chat_message:
-            self.chat_message.add("text", text="Generating a report...")
-            self.chat_message.notify()
 
         text = ""
         if response.status_code == 200:

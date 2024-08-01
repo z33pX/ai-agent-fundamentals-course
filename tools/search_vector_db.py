@@ -18,7 +18,7 @@ summarize_search_results = l.get_prompt("summarize-search-results")
 
 
 class SearchVectorDB(BaseTool):
-    name = agent.name
+    name = agent.agent_id
     description = agent.description
     args_schema: Type[BaseModel] = agent.input_model
 

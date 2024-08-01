@@ -18,7 +18,7 @@ summarize_search_results = l.get_prompt("summarize-search-results")
 
 
 class YouComSearch(BaseTool):
-    name: str = agent.name
+    name: str = agent.agent_id
     description: str = agent.description
     args_schema: Type[BaseModel] = agent.input_model
     include_summary: bool = False
